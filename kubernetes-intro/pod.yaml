@@ -9,7 +9,7 @@ data:
     server {
             listen 80 default_server;
             server_name _;
-            root /workdir;
+            root /homework;
             autoindex on;
       }
 ---
@@ -32,7 +32,7 @@ spec:
       lifecycle:
         preStop:
           exec:
-            command: ["/bin/sh","-c","rm -f /workdir/index.html; while killall -0 nginx; do sleep 1; done"]
+            command: ["/bin/sh","-c","rm -f /homework/index.html; while killall -0 nginx; do sleep 1; done"]
 
   initContainers:
   - name: install
