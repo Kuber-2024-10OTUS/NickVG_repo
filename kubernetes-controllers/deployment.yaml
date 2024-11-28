@@ -49,6 +49,14 @@ spec:
             preStop:
               exec:
                 command: ["/bin/sh","-c","rm -f /homework/index.html; while killall -0 nginx; do sleep 1; done"]
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+          readinessProbe:
+            exec:
+              command:
+              - ls
+              - /homework/index.html
           livenessProbe:
             exec:
               command:
