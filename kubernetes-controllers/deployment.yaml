@@ -66,7 +66,7 @@ spec:
             periodSeconds: 5
       nodeSelector:
         homework: "true"
-
+# init Containers          
       initContainers:
       - name: install
         image: busybox:1.28
