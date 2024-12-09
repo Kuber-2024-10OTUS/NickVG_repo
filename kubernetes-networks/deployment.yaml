@@ -1,0 +1,98 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-nginx
+  namespace: homework
+data:
+  default.conf: |
+    server {
+            listen 8000 default_server;
+            server_name _;
+            root /homework;
+            autoindex on;
+      }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homework
+  namespace: homework
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+          - containerPort: 8000
+            name: http-web-svc
+            protocol: TCP
+          volumeMounts:
+          - name: workdir
+            mountPath: "/homework"
+          - name: config
+            mountPath: /etc/nginx/conf.d/
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh","-c","rm -f /homework/index.html; while killall -0 nginx; do sleep 1; done"]
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+          readinessProbe:
+                  httpGet:
+                  path: /index.html
+                  port: 8000
+          readinessProbe:
+            exec:
+              command:
+              - ls
+              - /homework/index.html
+          livenessProbe:
+            exec:
+              command:
+              - ls
+              - /homework/index.html
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      nodeSelector:
+        homework: "true"
+#
+# init Containers          
+      initContainers:
+      - name: install
+        image: busybox:1.28
+        command:
+          - mkdir
+          - "/init"
+        volumeMounts:
+          - name: workdir
+            mountPath: "/init"
+        command:
+          - wget
+          - "-O"
+          - "/init/index.html"
+          - "http://info.cern.ch"
+      volumes:
+      - name: workdir
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: config
+        configMap:
+          name: configmap-nginx
+
