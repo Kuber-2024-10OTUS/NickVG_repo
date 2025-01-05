@@ -1,0 +1,31 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: monitoring-roleBinding
+  namespace: homework
+subjects:
+# You can specify more than one "subject"
+- kind: ServiceAccount
+  name: monitoring # "name" is case sensitive
+  namespace: homework
+roleRef:
+  # "roleRef" specifies the binding to a Role / ClusterRole
+  kind: ClusterRole #this must be Role or ClusterRole
+  name: monitoring-role # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cd-admin-role
+  namespace: homework
+subjects:
+  - kind: ServiceAccount
+    name: cd
+    namespace: homework
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+
