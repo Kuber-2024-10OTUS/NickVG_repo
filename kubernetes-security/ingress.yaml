@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homework-otus
+  namespace: homework
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # Эта аннотация будет работать только для пути /homepage
+    nginx.ingress.kubernetes.io/rewrite-target: / 
+#    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  labels:
+    app: nginx
+spec:
+  rules:
+    - host: homework.otus
+      http:
+        paths:
+          # Путь для всех запросов
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homework-service
+                port:
+                  number: 80
+          # Путь для переписывания /homepage на /
+          - path: /homepage(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: homework-service
+                port:
+                  number: 80
+#Второй способ решения без rewrite
+#          - path: /homepage
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: homework-service
+#                port:
+#                  number: 80
