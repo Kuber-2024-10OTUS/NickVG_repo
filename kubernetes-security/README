@@ -1,0 +1,30 @@
+Запуск проекта.
+
+kubectl apply -f namespace.yaml -f serviceAccount.yaml -f role.yaml -f roleBinding.yaml
+
+kubectl apply -f storageClass.yaml -f pvc.yaml -f cm.yaml -f deployment.yaml -f service.yaml -f ingress.yaml
+
+Пробуем подключиться с помощью kubeconfig
+`$ kubectl --kubeconfig=kubeconfig.yaml get po`
+error: You must be logged in to the server (Unauthorized)
+Для подключения можно создать секрет `kubectl apply -f secret.yaml > token`, 
+
+```kubectl get secret cd-token -n homework -o jsonpath='{.data.token}' | base64 -d;echo
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjJVVUZpb2hYVWNDdnE3bUJReDJvTl85WHRjV2x2dHNMWjZpMVpMd0tXRWMifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJob21ld29yayIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJjZC10b2tlbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJjZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjQ3YzVjMWFkLTEyMTYtNDJkMy1iMzlkLTJiZGJlNWJlNDZmOSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpob21ld29yazpjZCJ9.jGTEzRLJjSXCG5Z76fOQcHlhl4z73Lzzb2kSrGZdlZCNXVwnALY9ffqhq-IWTr4ff4vAoX7c3M8w2mM2E3i1e_6_UBgH7quHKNJqynZ3pFXplTa_WZQV1IlC2oAzlpYOGNyIffnPMTvjkC-XG5eO68imBBTaKtEZnNS3uTm6kIzZp5KO-mP0J1tonSJ0CzbmNTy1xQVTlgBJhInIPIu0P0rbcuyxWXj26HogFq7qOuM9QzGAldQlnnf9IFp17RYGW5ikDEOEm3cU88DkqYCq4S9H8xly1UatCgohj_QCIUtzbdOXJljna39um9n-cYRIWF8ZgILyFFeqpcBVbH1rYg```
+
+но мы пойдём другим путём:
+
+Создадим токен для cd, который впоследствии добавим в `kubeconfig.yaml`
+
+```kubectl create token cd --namespace homework --duration 24h
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjJVVUZpb2hYVWNDdnE3bUJReDJvTl85WHRjV2x2dHNMWjZpMVpMd0tXRWMifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzM2MTA4MzA2LCJpYXQiOjE3MzYwMjE5MDYsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiNWMyNTE1OWUtOWVmOS00MTNhLWIxYmQtNWE2NTE3NGNmNDdhIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJob21ld29yayIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJjZCIsInVpZCI6IjQ3YzVjMWFkLTEyMTYtNDJkMy1iMzlkLTJiZGJlNWJlNDZmOSJ9fSwibmJmIjoxNzM2MDIxOTA2LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6aG9tZXdvcms6Y2QifQ.YHtfr918mS9j9dloBdIfLSsWH_Oanni3KxuJTp_8CO388kc1YL259Jvty54zhAoihJSRM5xvyxOo3ofB0Mu39qp4jteMZvmLwKkXO0RfuItGzS3FLPsVuDiYAoHFmyK4WiiPM5mcc8RAM16bjttT1aZUbe3yWF18Pki57hWSDYxQ30vjQ8V5bEQ6vjRkMHIqFlzuexruN-r9LnAdOyzE34HdanQpTf6n_7uzGqaF4lH9tg6BeNB2kPs0s6koxeIS0u23LnBpwYlafPeSRC2N3nFMUEpaEF5EnVHjvrMi9j5u-v8Ge7zZ1P39oHFb4dnAUqqALGpd__BF7a5H_kEdyA```
+
+проверка того, что поды запущены из под УЗ monitoring
+```nick@Nikolay-PC:~/otus/otus-kuber/NickVG_repo/kubernetes-security$ kubectl get po -A -o json|grep monitoring
+                "serviceAccount": "monitoring",
+                "serviceAccountName": "monitoring",
+                "serviceAccount": "monitoring",
+                "serviceAccountName": "monitoring",
+                "serviceAccount": "monitoring",
+                "serviceAccountName": "monitoring",```
+
