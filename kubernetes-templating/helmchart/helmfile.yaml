@@ -1,8 +1,3 @@
-repositories:
-  - name: bitnami
-    url: registry-1.docker.io/bitnamicharts
-    oci: true
-
 environments:
   prod:
     values:
@@ -10,6 +5,11 @@ environments:
   dev:
     values:
       - namespace: dev
+---
+repositories:
+  - name: bitnami
+    url: registry-1.docker.io/bitnamicharts
+    oci: true
 
 releases:
   - name: kafka-prod
