@@ -1,0 +1,167 @@
+      #Переменные для Service
+      #
+service:
+  labels: 
+    app: nginx
+  name: homework-service 
+  spec:
+    clusterIP: 10.96.1.1
+    selector:
+      app: nginx 
+    ports:
+      port: '80'
+
+      #Переменные для Config Map
+      #
+configMap:
+  nameConf: configmap-conf
+  nameNginx: configmap-nginx
+  data:
+    nginxConf:
+      listen_port: 8000
+
+      #Переменные для Persistent Volume Claim
+      #
+pvc:
+  accessModes: ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+      #Переменные для role monitoring
+      #
+role:
+  metadata:
+    name: mionitoring-role
+
+
+      #Переменные для Service Account monitoring
+      #
+serviceAccountMon:
+  metadata:
+    name: monitoring
+
+      #Переменные для Service Account cd
+      #
+serviceAccountAdm:
+  metadata:
+    name: cd
+
+      #Переменные для Storage Class
+      #
+storageClass:
+  reclaimPolicy: Retain
+  allowVolumeExpansion: true
+  mountOptions: discard
+
+      #Переменные для VolumeBinding
+      #
+volumeBindingMode: Immediate
+
+      #Переменные для deployment
+      #
+deployment:
+  metadata:
+    labels:
+      app: nginx
+  spec:
+    replicas: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+    selector:
+      matchLabels:
+        app: nginx
+    template:
+      metadata:
+        labels:
+          app: nginx
+      spec:
+        containers:
+          name: nginx
+          image: 
+            repository: nginx
+            tag: latest
+          ports:
+            containerPort: 8000
+            name: http-web-svc
+            protocol: TCP
+          volumeMounts:
+            name: pvc-volume
+            mountPath: "/homework"
+            name: config
+            mountPath: /etc/nginx/conf.d/
+            name: homework-conf
+            mountPath: /homework/conf
+          readinessProbe:
+            tcpSocket:
+              enabled: true
+            httpGet:
+              enabled: true
+            exec:
+              enabled: true
+          livenessProbe:
+            exec:
+              enabled: true
+
+      #Переменные для ingress контроллера
+      #
+ingress:
+  metadata:
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    labels:
+      app: nginx
+  spec:
+    rules:
+      host: homework.otus
+      http:
+        paths:
+          pathRoot: "/"
+          pathHomepage: "/homepage(/|$)(.*)"
+
+
+      #Переменные для RoleBinding Service Account monitroing
+      #
+roleBindingMon:
+  metadata:
+    name: monitoring-roleBinding
+  subjects:
+    name: monitoring # "name" is case sensitive
+  roleRef:
+    name: monitoring-role # this must match the name of the Role or ClusterRole you wish to bind to
+
+      #Переменные для RoleBinding Service Account cd
+      #
+roleBindingCd:
+  metadata:
+    name: cd-admin-role
+  subjects:
+    name: cd
+  roleRef:
+    name: admin
+  
+      #Переменные для secret
+      #
+secret:
+  metadata:
+    name: cd-token
+    annotations:
+      serviceAccountName: cd
+
+# Параметры для управления активацией и настройкой зависимостей:
+#
+mysql:
+  enabled: true
+  auth:
+    rootPassword: "rootpassword"
+    database: "mydb"
+    username: "myadmin"
+    password: "mypassword"
+
+redis:
+  enabled: true
+  usePassword: false
