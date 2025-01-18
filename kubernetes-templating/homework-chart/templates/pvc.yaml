@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Namespace }}-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  #  storageClassName: "" # Empty string must be explicitly set otherwise default StorageClass will be set
+#  volumeName: homework-volume
+  accessModes:
+    - {{ .Values.pvc.accessModes }}
+#  volumeMode: Filesystem
+  resources: 
+    requests:
+      storage: {{ .Values.pvc.resources.requests.storage }}
+  storageClassName: {{ .Release.Namespace }}-stgclass #standard
+#  selector:
+#    matchLabels:
+#      app: nginx

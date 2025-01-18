@@ -1,0 +1,26 @@
+{{- if and .Release.IsInstall (ne .Release.Namespace "default") -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+{{- end }}
+
+#apiVersion: v1
+#kind: Namespace
+#metadata:
+#  name: homework
+#  labels:
+#    app.kubernetes.io/managed-by: Helm
+#  annotations:
+#    meta.helm.sh/release-name: {{ .Release.Name }}
+#    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+      #Что было изменено:
+
+      #Добавлена метка app.kubernetes.io/managed-by: Helm, которая указывает, что пространство имён управляется Helm.
+      #Добавлена аннотация meta.helm.sh/release-name: homework-chart\,{{ .Release.Name }} которая требуется для корректного управления релизом.
+      ##Добавлена аннотация meta.helm.sh/release-namespace: {{ .Release.Namespace }}, которая требуется для корректной работы Helm с не дефолтным namespace.

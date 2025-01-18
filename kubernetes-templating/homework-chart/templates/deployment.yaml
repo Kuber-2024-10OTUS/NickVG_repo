@@ -1,0 +1,97 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "homework-chart.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nginx
+spec:
+  replicas: {{ .Values.deployment.spec.replicas }}
+  strategy:
+    type: {{ .Values.deployment.spec.strategy.type }}
+    rollingUpdate:
+      maxSurge: {{ .Values.deployment.spec.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.deployment.spec.strategy.rollingUpdate.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      serviceAccountName: {{ .Values.serviceAccountMon.metadata.name}}  # Указываем нужную сервисную учетную запись
+      volumes:
+        - name: pvc-volume
+        - name: homework-conf
+      containers:
+        - name: {{ .Values.deployment.spec.template.spec.containers.name }}-{{ .Chart.Name }}
+          image: {{ .Values.deployment.spec.template.spec.containers.image.repository }}:{{ .Values.deployment.spec.template.spec.containers.image.tag }}
+          ports:
+          - containerPort: {{ .Values.deployment.spec.template.spec.containers.ports.containerPort }}
+            name: {{ .Values.deployment.spec.template.spec.containers.ports.name }}
+            protocol: {{ .Values.deployment.spec.template.spec.containers.ports.protocol }}
+          volumeMounts:
+          - name: pvc-volume
+            mountPath: "/homework"
+          - name: config
+            mountPath: /etc/nginx/conf.d/
+          - name: homework-conf
+            mountPath: /homework/conf
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh","-c","rm -f /homework/index.html; while killall -0 nginx; do sleep 1; done"]
+          {{- if .Values.deployment.spec.template.spec.containers.readinessProbe.tcpSocket.enabled  }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.deployment.spec.template.spec.containers.ports.containerPort }}
+          {{- end }}
+          {{- if .Values.deployment.spec.template.spec.containers.readinessProbe.httpGet.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: {{ .Values.deployment.spec.template.spec.containers.ports.containerPort }}
+          {{- end }}
+          {{- if .Values.deployment.spec.template.spec.containers.readinessProbe.exec.enabled }}
+          readinessProbe:
+            exec:
+              command:
+              - ls
+              - /homework/index.html
+          {{- end }}
+          {{- if .Values.deployment.spec.template.spec.containers.livenessProbe.exec.enabled }}
+          livenessProbe:
+            exec:
+              command:
+              - ls
+              - /homework/index.html
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          {{- end }}
+      nodeSelector:
+        homework: "true"
+#
+# init Containers          
+      initContainers:
+      - name: install
+        image: busybox:1.28
+        volumeMounts:
+          - name: pvc-volume
+            mountPath: "/init"
+        command:
+          - wget
+          - "-O"
+          - "/init/index.html"
+          - "http://info.cern.ch"
+      volumes:
+      - name: config
+        configMap:
+          name: {{ .Values.configMap.nameNginx }}
+      - name: pvc-volume
+        persistentVolumeClaim:
+          claimName: {{ .Release.Namespace }}-pvc
+      - name: homework-conf
+        configMap:
+          name: {{ .Values.configMap.nameConf  }}

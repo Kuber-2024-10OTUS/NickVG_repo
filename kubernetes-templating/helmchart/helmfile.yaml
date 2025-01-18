@@ -1,0 +1,38 @@
+environments:
+  prod:
+    values:
+      - namespace: prod
+  dev:
+    values:
+      - namespace: dev
+---
+repositories:
+  - name: bitnami
+    url: registry-1.docker.io/bitnamicharts
+    oci: true
+
+releases:
+  - name: kafka-prod
+    namespace: prod
+    chart: bitnami/kafka
+    version: 28.0.0
+    values:
+      - replicaCount: 5
+      - image:
+          tag: 3.5.2
+      - auth:
+          clientProtocol: SASL_PLAINTEXT
+          interBrokerProtocol: SASL_PLAINTEXT
+
+  - name: kafka-dev
+    namespace: dev
+    chart: bitnami/kafka
+    version: 31.1.0
+    values:
+      - replicaCount: 1
+      - auth:
+          clientProtocol: PLAINTEXT
+          interBrokerProtocol: PLAINTEXT
+          enabled: false
+      - image:
+          tag: latest
